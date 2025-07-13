@@ -30,38 +30,38 @@ class Button:
         screen.blit(self.image, self.rect)
         screen.blit(self.text, self.text_rect)
 
-    def check_for_input(self, position, function):
+    def check_for_input(self, position):
         if position[0] in range(self.rect.left, self.rect.right) and position[1] in range(self.rect.top,
                                                                                           self.rect.bottom):
-            if function == 0:
+            if self.function == 0:
                 global working
                 working = False
                 pygame.quit()
                 exit()
             else:
                 global menu, level, vehicle, run, go
-                if function in (1, 2, 11):  # functions that cause a level to begin
+                if self.function in (1, 2, 11):  # functions that cause a level to begin
                     menu = False
-                if function == 1:
+                if self.function == 1:  # level1
                     level = level1
                     vehicle = 0
-                elif function == 2:
+                elif self.function == 2:  # level2
                     level = level2
                     vehicle = 0
-                elif function == 11:
+                elif self.function == 11:  # level3
                     level = level3
                     vehicle = 0
-                elif function == 3:
+                elif self.function == 3:  # change to man
                     change_vehicle(center_x, center_y, vehicle, 0)
-                elif function == 4:
+                elif self.function == 4:  # change to bike
                     change_vehicle(center_x, center_y, vehicle, 1)
-                elif function == 5:
+                elif self.function == 5:  # change to car
                     change_vehicle(center_x, center_y, vehicle, 2)
-                elif function == 6:
+                elif self.function == 6:  # menu
                     run = False
                     menu = True
-                    main_menu()
-                elif function == 7:
+                    menu_screen.run()
+                elif self.function == 7:
                     go = True
 
     def change_colour(self, position):
@@ -87,6 +87,76 @@ def display_text(text, position, font, color):
             x += (word_width + space)
         x = position[0]  # starts the line on the left hand side of the text box
         y += word_height
+
+
+class Menu:
+    def __init__(self, button_image_, top_score_):
+        self.button_image = pygame.transform.scale(button_image_, (250, 90))
+        self.menu_font = pygame.font.Font('freesansbold.ttf', 16)
+        self.title_font = pygame.font.Font('freesansbold.ttf', 50)
+        self.office_image = pygame.transform.scale(pygame.image.load("images/office1.png"), (240, 180))
+        self.top_score = top_score_
+        self.level_1_button = Button(self.button_image, (WIDTH // 5), 100, "Level 1!", 1)
+        self.level_2_button = Button(self.button_image, ((WIDTH // 5) * 4), 100, "Level 2!", 2)
+        self.level_3_button = Button(self.button_image, ((WIDTH // 5) * 4), 320, "Level 3!", 11)
+        self.quit_button = Button(self.button_image, (WIDTH // 2), 550, "QUIT", 0)
+
+    def draw(self):
+        screen.fill('black')
+
+        # draw the title
+        title1 = self.title_font.render('Work ', True, 'white', 'black')
+        title2 = self.title_font.render('Rush!', True, 'white', 'black')
+        title1.set_alpha(240)
+        title2.set_alpha(240)
+        screen.blit(self.office_image, (WIDTH // 2 - 120, 30))
+        screen.blit(title1, ((WIDTH // 2 - 68), 60))
+        screen.blit(title2, ((WIDTH // 2 - 70), 110))
+        screen.blit(self.draw_score(0), ((WIDTH // 5 - 70), 170))
+        screen.blit(self.draw_score(1), (((WIDTH // 5) * 4 - 70), 170))
+        screen.blit(self.draw_score(2), (((WIDTH // 5) * 4 - 70), 390))
+
+        display_text(
+            "Goal:\nWalk to the circled office in the shortest time, you start moving after you "
+            "press 'GO'\n\nControls:\nArrow keys control movement\n\nYou can select your vehicle by using the "
+            "buttons on-screen.\n\nYou may switch to a bike or car when at home (your start position)\n\nYou "
+            "can switch from a bike to a person anywhere, or from a car to a person in a parking garage.",
+            ((WIDTH // 4 - 110), 240), self.menu_font, 'white')
+
+        self.level_1_button.change_colour(pygame.mouse.get_pos())
+        self.level_1_button.update()
+        self.level_2_button.change_colour(pygame.mouse.get_pos())
+        self.level_2_button.update()
+        self.level_3_button.change_colour(pygame.mouse.get_pos())
+        self.level_3_button.update()
+        self.quit_button.change_colour(pygame.mouse.get_pos())
+        self.quit_button.update()
+
+    def draw_score(self, index):
+        if self.top_score[index] < 9999:
+            return self.menu_font.render("Best time: " + str(math.floor(self.top_score[index])) + " seconds", True,
+                                         'white', 'black')
+        else:
+            return self.menu_font.render("Best time: None", True, 'white', 'black')
+
+    def run(self):
+        pygame.display.set_caption("Menu")
+        global menu
+        while menu:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    self.level_1_button.check_for_input(pygame.mouse.get_pos())
+                    self.level_2_button.check_for_input(pygame.mouse.get_pos())
+                    self.level_3_button.check_for_input(pygame.mouse.get_pos())
+                    self.quit_button.check_for_input(pygame.mouse.get_pos())
+            self.draw()
+            pygame.display.update()
+
+
+menu_screen = Menu(button_image, top_score)
 
 
 def main_menu():  # main menu screen
@@ -128,10 +198,10 @@ def main_menu():  # main menu screen
                 pygame.quit()
                 exit()
             if events.type == pygame.MOUSEBUTTONDOWN:
-                level_1_button.check_for_input(pygame.mouse.get_pos(), 1)
-                level_2_button.check_for_input(pygame.mouse.get_pos(), 2)
-                level_3_button.check_for_input(pygame.mouse.get_pos(), 11)
-                quit_button.check_for_input(pygame.mouse.get_pos(), 0)
+                level_1_button.check_for_input(pygame.mouse.get_pos())
+                level_2_button.check_for_input(pygame.mouse.get_pos())
+                level_3_button.check_for_input(pygame.mouse.get_pos())
+                quit_button.check_for_input(pygame.mouse.get_pos())
         screen.fill('black')
         screen.blit(level_1_top_score, ((WIDTH // 5 - 70), 170))
         screen.blit(level_2_top_score, (((WIDTH // 5) * 4 - 70), 170))
@@ -157,7 +227,7 @@ def main_menu():  # main menu screen
 
 
 while working:
-    main_menu()
+    menu_screen.run()
     # region game
     # region game constants
     pygame.display.set_caption("Game")
@@ -180,6 +250,9 @@ while working:
     time = 0
     win = False
     go = False
+    change_allowed = [False, False, False]
+    tile_height = ((HEIGHT - 150) // 18)
+    tile_width = (WIDTH // 24)
     man_image = pygame.image.load("images/man.png")
     man_image = pygame.transform.scale(man_image, (49, 49))
     car_image = pygame.image.load("images/car.png")
@@ -204,10 +277,8 @@ while working:
     # endregion
 
     # region game functions
-    def draw_map():
+    def draw_map(num1, num2):
         # 1 tile width is currently 30 and height is 25
-        num1 = ((HEIGHT - 150) // 18)
-        num2 = (WIDTH // 24)
         for i in range(len(level)):
             for j in range(len(level[i])):
                 if level[i][j] == 0:
@@ -350,6 +421,23 @@ while working:
                 # change from car ->
             if (current_vehicle == 2) and (level[centery // num1][centerx // num2] == 6) and (desired_vehicle == 0):
                 vehicle = desired_vehicle
+
+    def check_change_vehicle(centerx, centery, current_vehicle):
+        num1 = (HEIGHT - 150) // 18
+        num2 = (WIDTH // 24)
+        global change_allowed
+        if level[centery // num1][centerx // num2] == 7:  # while at home
+            change_allowed = [True, True, True]
+        elif current_vehicle == 1:  # change from bike to man anywhere
+            change_allowed = [True, True, False]
+        elif current_vehicle == 2 and level[centery // num1][centerx // num2] == 6:  # change car to man in parking
+            change_allowed = [True, False, True]
+        else:
+            change_allowed = [False, False, False]
+        if current_vehicle == 0:
+            change_allowed[0] = True
+        if current_vehicle == 2:
+            change_allowed[2] = True
         #  endregion
 
     run = True
@@ -358,11 +446,11 @@ while working:
         if go and not win:
             time += (1/25)
         screen.fill((130, 130, 130))
-        draw_map()
+        draw_map(tile_height, tile_width)
         draw_player()
         if win:
             menu_screen_button_surface = pygame.transform.scale(button_image, (300, 110))
-            main_menu_button = Button(menu_screen_button_surface, (WIDTH // 2), 400, "MENU", 0)
+            main_menu_button = Button(menu_screen_button_surface, (WIDTH // 2), 400, "MENU", 6)
             main_menu_button.change_colour(pygame.mouse.get_pos())
             main_menu_button.update()
             if top_score[level_number - 1] <= 9999:
@@ -370,6 +458,7 @@ while working:
                     top_score[level_number - 1] = time
         center_x = player_x + 24
         center_y = player_y + 24
+        check_change_vehicle(center_x, center_y, vehicle)
         if go:
             moves_allowed = check_position(center_x, center_y, time)
             player_x, player_y = move_player(player_x, player_y)
@@ -386,6 +475,8 @@ while working:
                     direction_command = 2
                 if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                     direction_command = 3
+                if event.key == pygame.K_e or event.key == pygame.K_SPACE:
+                    go = False
             if event.type == pygame.KEYUP:
                 # keeps the player facing the same way when a key is let go
                 if event.key == pygame.K_RIGHT and direction_command == 0:  # checks the player is moving right
@@ -397,23 +488,29 @@ while working:
                 if event.key == pygame.K_DOWN and direction_command == 3:  # checks the player is moving down
                     direction_command = direction
             if event.type == pygame.MOUSEBUTTONDOWN:
-                man_button.check_for_input(pygame.mouse.get_pos(), 3)
-                bike_button.check_for_input(pygame.mouse.get_pos(), 4)
-                car_button.check_for_input(pygame.mouse.get_pos(), 5)
-                go_button.check_for_input(pygame.mouse.get_pos(), 7)
+                if change_allowed[0]:
+                    man_button.check_for_input(pygame.mouse.get_pos())
+                if change_allowed[1]:
+                    bike_button.check_for_input(pygame.mouse.get_pos())
+                if change_allowed[2]:
+                    car_button.check_for_input(pygame.mouse.get_pos())
+                go_button.check_for_input(pygame.mouse.get_pos())
                 if win:
-                    main_menu_button.check_for_input(pygame.mouse.get_pos(), 6)
+                    main_menu_button.check_for_input(pygame.mouse.get_pos())
 
         for i in range(4):  # loops through the 4 allowed directions
             if direction_command == i and moves_allowed[i]:
                 direction = i
 
-        man_button.change_colour(pygame.mouse.get_pos())
-        man_button.update()
-        bike_button.change_colour(pygame.mouse.get_pos())
-        bike_button.update()
-        car_button.change_colour(pygame.mouse.get_pos())
-        car_button.update()
+        if change_allowed[0]:
+            man_button.change_colour(pygame.mouse.get_pos())
+            man_button.update()
+        if change_allowed[1]:
+            bike_button.change_colour(pygame.mouse.get_pos())
+            bike_button.update()
+        if change_allowed[2]:
+            car_button.change_colour(pygame.mouse.get_pos())
+            car_button.update()
         go_button.change_colour(pygame.mouse.get_pos())
         go_button.update()
         score_text = score_font.render(('Time: ' + str(math.floor(time)) + " seconds"), True, 'white', 'black')
